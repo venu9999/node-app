@@ -1,0 +1,47 @@
+pipeline{
+    agent any
+    stages{
+    stage('Git checkout'){
+            steps {
+                script 
+                {
+                   git credentialsId: 'git-credentials', url: 'https://github.com/venu9999/node-app.git'
+                }
+           }
+        }
+
+        stage('Docker build'){
+    steps{
+            script{
+                    docker.withRegistry('https://651188399649.dkr.ecr.ap-southeast-2.amazonaws.com/', 'ecr:ap-southeast-2:demo-ecr-credentials') {
+                    sh "docker build -t 651188399649.dkr.ecr.ap-southeast-2.amazonaws.com/catalog-demo:latest_${env.BUILD_ID} ."
+                    }
+                }
+            }
+        }
+        stage('Docker push')
+        {
+            steps {
+                script{
+                    docker.withRegistry('https://651188399649.dkr.ecr.ap-southeast-2.amazonaws.com', 'ecr:ap-southeast-2:demo-ecr-credentials') {
+                    sh "docker push 651188399649.dkr.ecr.ap-southeast-2.amazonaws.com/eks-demo:latest_${env.BUILD_ID}"
+                    }
+                    sh "docker rmi 651188399649.dkr.ecr.ap-southeast-2.amazonaws.com/eks-demo:latest_${env.BUILD_ID}"
+                    }
+            }
+        }
+        stage('Deploying image to ECS Cluster'){
+            steps {
+                script{
+				    sh '''
+                    sed -e "s/latest_0.0/latest_$BUILD_ID/g" pods.yml > eks-pods.yml
+                    kubectl apply -f eks-pods.yml
+                    kubectl apply -f services.yml
+                    '''
+                }
+            }
+        }
+
+    } 
+
+}    
