@@ -7,6 +7,6 @@ metadata:
 spec:
   containers:
     - name: nodeapp
-      image: kammana/nodeapp:tagVersion
+      image: 651188399649.dkr.ecr.ap-southeast-2.amazonaws.com/eks-demo:latest_0.0  
       ports:
         - containerPort: 8080
